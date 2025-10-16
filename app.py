@@ -1,9 +1,23 @@
 import os
 from flask import Flask, jsonify
-from water_loader.py import load_water_summary  # NOTE: see next line for correct import
 
-# If the above import line errors, use this one instead (GitHub sometimes needs relative import):
-# from water_loader import load_water_summary
+# ---- inline replacement for water_loader.py ----
+def _water_path():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_dir, "water.trf")
+
+def load_water_summary():
+    path = _water_path()
+    if not os.path.exists(path):
+        return "water.trf not found; using default resonance parameters."
+    try:
+        with open(path, "rb") as f:
+            data = f.read()
+        preview = data[:120]
+        return f"water.trf size={len(data)} bytes; preview={preview!r}"
+    except Exception as e:
+        return f"Failed to read water.trf: {e}"
+# ------------------------------------------------
 
 app = Flask(__name__)
 
@@ -22,5 +36,4 @@ def status():
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "10000"))
-    # 0.0.0.0 so Render can reach it
     app.run(host="0.0.0.0", port=port)
